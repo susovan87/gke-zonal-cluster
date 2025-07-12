@@ -1,0 +1,75 @@
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+terraform.tfplan
+terraform.tfplan.*
+crash.log
+crash.*.log
+backend.config
+
+# Kubernetes
+kubeconfig
+kubeconfig.*
+.kube/
+*.kubeconfig
+
+# Google Cloud
+.gcloudignore
+gcloud-credentials.json
+service-account-key.json
+*.json
+!terraform.tfvars.example
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+application.properties
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vimrc
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Cloudflare Tunnel
+cloudflared
+tunnel.json
+cert.pem
+
+# Backup files
+*.backup
+*.bak
+
+# OS generated files
+.fuse_hidden*
+.nfs*

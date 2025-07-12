@@ -1,0 +1,11 @@
+# Copy values from 2-gke terraform.tfvars after cluster deployment
+enable_cloudflare_tunnel = false
+cloudflare_tunnel_token  = ""
+
+# Routes are configured in Cloudflare Zero Trust Dashboard:
+# https://one.dash.cloudflare.com/networks/tunnels
+
+nginx_ingress_replicas = 2
+enable_storage_classes = true
+
+tf_state_bucket = "your-bucket-name"

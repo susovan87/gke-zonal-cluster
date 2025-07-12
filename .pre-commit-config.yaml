@@ -1,0 +1,52 @@
+---
+# Pre-commit hooks for GKE Zonal Cluster project
+# Install with: pre-commit install
+repos:
+  # Terraform hooks
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.99.5
+    hooks:
+      - id: terraform_fmt
+        name: Terraform Format
+        description: Rewrites all Terraform configuration files to a canonical format
+        args:
+          - --args=-recursive
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # - id: no-commit-to-branch
+      #   name: No Commit to Branch
+      #   args: ['--branch', 'main']
+
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        exclude: \.md$
+
+      - id: end-of-file-fixer
+        name: Fix End of Files
+        exclude: \.terraform/.*$
+
+      - id: check-yaml
+        name: Check YAML
+        exclude: \.terraform/.*$
+
+      - id: check-added-large-files
+        name: Check for Large Files
+        args: ['--maxkb=1000']
+
+      - id: check-merge-conflict
+        name: Check for Merge Conflicts
+
+  # # Local hooks
+  # - repo: local
+  #   hooks:
+  #     - id: sync-configs
+  #       name: Sync Configs to S3
+  #       description: Sync terraform.tfvars, backend.config, and application.properties to S3
+  #       entry: ./scripts/sync-configs.sh
+  #       language: script
+  #       files: \.(tfvars|config|properties)$
+  #       pass_filenames: false
+  #       always_run: true

@@ -1,0 +1,43 @@
+# Example Terraform variables configuration
+# Copy this file to terraform.tfvars and customize the values
+
+zone   = "us-central1-a"
+
+# Cluster configuration
+cluster_name = "learning-cluster"
+
+# Network configuration
+network_name = "gke-learning-vpc"
+subnet_name  = "gke-learning-subnet"
+
+# CIDR ranges (adjust if needed to avoid conflicts)
+subnet_cidr      = "10.0.0.0/24"
+pods_cidr        = "10.1.0.0/16"
+services_cidr    = "10.2.0.0/16"
+master_ipv4_cidr = "172.16.0.0/28"
+
+# Node pool configuration
+node_count = 2 # ARM-based t2a-standard-2 spot instances
+
+# Disk configuration
+disk_size_gb = 30
+
+# Cloudflare Tunnel configuration
+enable_cloudflare_tunnel = true
+
+# Cloudflare Tunnel token (get from Cloudflare dashboard)
+# cloudflare_tunnel_token = "your-base64-encoded-tunnel-token"
+
+# Cloudflare Tunnel configuration
+# cloudflare_tunnel_config = {
+#   tunnel_id = "your-tunnel-uuid"
+#   ingress_rules = [
+#     {
+#       hostname = "*.yourdomain.com"
+#       service  = "http://nginx-ingress-ingress-nginx-controller.ingress-nginx.svc.cluster.local:80"
+#       path     = "/"
+#     }
+#   ]
+# }
+
+tf_state_bucket = "your-bucket-name"

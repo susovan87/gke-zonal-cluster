@@ -1,0 +1,5 @@
+# Required: Your GCP Project ID
+project_id = "your-gcp-project-id"
+
+# Free tier eligible regions: us-central1, us-west1, us-east1
+region = "us-central1"
