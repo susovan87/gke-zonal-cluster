@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namePrefix: dev-
+
+nameSuffix: -v1
+
+labels:
+  - includeSelectors: true
+    pairs:
+      environment: development
+      version: v1
+
+# Override ConfigMap values for development
+configMapGenerator:
+  - name: echo-config
+    behavior: merge
+    envs:
+      - application.properties
+
+# Development-specific patches
+patches:
+  # Add debug annotations for development
+  - target:
+      kind: Deployment
+      name: echo-app
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+
+# Domain substitution - replace ingress host with value from ConfigMap
+replacements:
+  - source:
+      kind: ConfigMap
+      name: echo-config
+      fieldPath: data.ECHO_APP_DOMAIN
+    targets:
+      - select:
+          kind: Ingress
+          name: echo-ingress
+        fieldPaths:
+          - spec.rules.0.host

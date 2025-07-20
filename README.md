@@ -126,3 +126,17 @@ kubectl get pods -n cloudflare
 # Check storage classes
 kubectl get storageclass
 ```
+
+## 📦 Application Deployment
+This project includes a [sample echo application](./k8s/hello-world-app/) to demonstrate deployment and management practices.
+
+### Deploy to Development Environment
+
+```bash
+# Deploy to development
+kubectl apply -k k8s/hello-world-app/overlays/development
+```
+```bash
+# Deploy to production
+kubectl apply -k k8s/hello-world-app/overlays/production
+```

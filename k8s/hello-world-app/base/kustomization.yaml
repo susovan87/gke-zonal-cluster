@@ -1,0 +1,19 @@
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app: echo-app
+
+# Base ConfigMap with default values
+configMapGenerator:
+  - name: echo-config
+    literals:
+    - ECHO_APP_DOMAIN=echo-app.mydomain.com
+    - ECHO_TEXT=Hello from GKE! This is a simple echo service 🚀
+    - ECHO_PORT=8080
+
+# Note: Variable substitution is handled by overlays since they merge the ConfigMap

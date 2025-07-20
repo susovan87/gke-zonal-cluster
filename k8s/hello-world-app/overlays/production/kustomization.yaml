@@ -1,0 +1,44 @@
+resources:
+  - ../../base
+
+namePrefix: prod-
+
+nameSuffix: -v1
+
+labels:
+  - includeSelectors: true
+    pairs:
+      environment: production
+      version: v1
+
+# Override ConfigMap values for production
+configMapGenerator:
+  - name: echo-config
+    behavior: merge
+    envs:
+      - application.properties
+
+# Production-specific patches
+patches:
+  # Production scaling
+  - target:
+      kind: Deployment
+      name: echo-app
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+
+
+# Variable substitutions - domain will be automatically replaced from ConfigMap
+replacements:
+  - source:
+      kind: ConfigMap
+      name: echo-config
+      fieldPath: data.ECHO_APP_DOMAIN
+    targets:
+      - select:
+          kind: Ingress
+          name: echo-ingress
+        fieldPaths:
+          - spec.rules.0.host

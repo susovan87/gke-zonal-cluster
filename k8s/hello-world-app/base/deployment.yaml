@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-app
+spec:
+  replicas: 1
+  template:
+    spec:
+      tolerations:
+      - key: kubernetes.io/arch
+        operator: Equal
+        value: arm64
+        effect: NoSchedule
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+      - name: echo
+        image: hashicorp/http-echo:latest
+        env:
+        - name: ECHO_TEXT
+          valueFrom:
+            configMapKeyRef:
+              name: echo-config
+              key: ECHO_TEXT
+        - name: ECHO_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: echo-config
+              key: ECHO_PORT
+        args:
+          - -text=$(ECHO_TEXT)
+          - -listen=:$(ECHO_PORT)
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 32Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
