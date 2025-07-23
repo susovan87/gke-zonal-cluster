@@ -33,10 +33,10 @@ resource "google_storage_bucket" "terraform_state" {
     enabled = true
   }
 
-  # Lifecycle management to reduce costs
+  # Lifecycle management - keep only 5 most recent versions of state files
   lifecycle_rule {
     condition {
-      age = 7
+      num_newer_versions = 5
     }
     action {
       type = "Delete"
