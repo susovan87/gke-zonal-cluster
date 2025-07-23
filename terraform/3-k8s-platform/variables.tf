@@ -19,7 +19,7 @@ variable "platform_replicas" {
   default     = 2
   validation {
     condition     = contains([1, 2], var.platform_replicas)
-    error_message = "Platform replicas must be 1 or 2."
+    error_message = "Platform replicas must be 1 (single-node) or 2 (HA mode)."
   }
 }
 
