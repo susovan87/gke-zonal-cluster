@@ -70,10 +70,28 @@ make status
 - `tf_state_bucket`: GCS bucket name for Terraform state (from bootstrap stage)
 
 ### Optional Variables
+- `platform_replicas`: Number of replicas for platform components (default: 2, must be 1 or 2)
 - `enable_cloudflare_tunnel`: Enable Cloudflare Tunnel deployment (default: false)
 - `cloudflare_tunnel_token`: Cloudflare Tunnel token for authentication
-- `nginx_ingress_replicas`: Number of NGINX Ingress Controller replicas (default: 2)
 - `enable_storage_classes`: Enable custom storage classes (default: true)
+
+### Dynamic Scaling
+Platform components support dynamic scaling based on node count through the `platform_replicas` variable:
+- **1 replica**: Cost-optimized mode (no PDBs, recreate strategy)
+- **2 replicas**: High availability mode (with PDBs, rolling updates)
+
+#### Scaling Process
+**Important**: When scaling nodes, apply changes in the correct order to ensure proper Pod Disruption Budget configuration:
+
+**Scaling Down (2 nodes → 1 node):**
+1. First, apply `3-k8s-platform/` with `platform_replicas=1`
+2. Then, apply `2-gke/` with `node_count=1`
+
+**Scaling Up (1 node → 2 nodes):**
+1. First, apply `2-gke/` with `node_count=2`  
+2. Then, apply `3-k8s-platform/` with `platform_replicas=2`
+
+This ensures PDBs and HA settings are configured appropriately to ease node drain operations.
 
 
 ## Troubleshooting
@@ -91,9 +109,6 @@ kubectl get pods -n cloudflare
 
 # Check storage classes
 kubectl get storageclass
-
-# Or use the status command
-make status
 ```
 
 ## Cleanup

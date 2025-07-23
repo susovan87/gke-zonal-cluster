@@ -46,7 +46,7 @@ resource "kubernetes_deployment" "cloudflare_tunnel" {
   }
 
   spec {
-    replicas = 2
+    replicas = var.platform_replicas
 
     selector {
       match_labels = {
@@ -83,8 +83,10 @@ resource "kubernetes_deployment" "cloudflare_tunnel" {
           }
         }
 
-        # Topology spread constraints - distribute pods evenly across nodes
-        topology_spread_constraint {
+        # Topology spread constraints - distribute pods evenly across nodes (conditional)
+        dynamic "topology_spread_constraint" {
+          for_each = var.platform_replicas > 1 ? [1] : []
+          content {
           max_skew           = 1
           topology_key       = "kubernetes.io/hostname"
           when_unsatisfiable = "ScheduleAnyway"
@@ -93,6 +95,7 @@ resource "kubernetes_deployment" "cloudflare_tunnel" {
               "app.kubernetes.io/name" = "cloudflare-tunnel"
             }
           }
+        }
         }
 
         # Tolerations for ARM64 architecture
@@ -266,9 +269,9 @@ resource "kubernetes_service" "cloudflare_tunnel_metrics" {
   }
 }
 
-# Pod Disruption Budget for Cloudflare Tunnel
+# Pod Disruption Budget for Cloudflare Tunnel (only for multi-replica setups)
 resource "kubernetes_pod_disruption_budget_v1" "cloudflare_tunnel" {
-  count = var.enable_cloudflare_tunnel ? 1 : 0
+  count = var.enable_cloudflare_tunnel && var.platform_replicas > 1 ? 1 : 0
 
   metadata {
     name      = "cloudflare-tunnel-pdb"

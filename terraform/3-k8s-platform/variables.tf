@@ -13,10 +13,14 @@ variable "cloudflare_tunnel_token" {
   sensitive   = true
 }
 
-variable "nginx_ingress_replicas" {
-  description = "Number of NGINX Ingress Controller replicas"
+variable "platform_replicas" {
+  description = "Number of replicas for platform components (NGINX Ingress, Cloudflare Tunnel)"
   type        = number
   default     = 2
+  validation {
+    condition     = contains([1, 2], var.platform_replicas)
+    error_message = "Platform replicas must be 1 (single-node) or 2 (HA mode)."
+  }
 }
 
 variable "enable_storage_classes" {

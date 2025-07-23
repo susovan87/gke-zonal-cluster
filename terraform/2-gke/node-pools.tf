@@ -51,14 +51,13 @@ resource "google_container_node_pool" "spot_pool" {
     auto_upgrade = true
   }
 
-  # Upgrade settings - allow disruption for cost savings
+  # Upgrade settings - conditional based on node count
   upgrade_settings {
-    strategy        = "SURGE"
-    max_surge       = 1
-    max_unavailable = 0
+    strategy = "SURGE"
+    # Single node: recreate strategy (max_unavailable=1, max_surge=0)
+    # Multi-node: rolling update (max_unavailable=0, max_surge=1)
+    max_surge       = var.node_count == 1 ? 0 : 1
+    max_unavailable = var.node_count == 1 ? 1 : 0
   }
 
-  lifecycle {
-    ignore_changes = [node_count]
-  }
 }

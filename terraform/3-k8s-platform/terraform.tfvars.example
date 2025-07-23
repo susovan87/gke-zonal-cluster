@@ -2,10 +2,12 @@
 enable_cloudflare_tunnel = false
 cloudflare_tunnel_token  = ""
 
+# Platform component replica configuration
+platform_replicas = 2  # Use 1 for single-node setups, 2 for HA
+
 # Routes are configured in Cloudflare Zero Trust Dashboard:
 # https://one.dash.cloudflare.com/networks/tunnels
 
-nginx_ingress_replicas = 2
 enable_storage_classes = true
 
 tf_state_bucket = "your-bucket-name"

@@ -51,6 +51,11 @@ output "node_pool_name" {
   value       = google_container_node_pool.spot_pool.name
 }
 
+output "node_count" {
+  description = "Number of nodes in the spot pool"
+  value       = var.node_count
+}
+
 # kubectl configuration command
 output "kubectl_config_command" {
   description = "Command to configure kubectl"
