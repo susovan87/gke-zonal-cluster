@@ -6,4 +6,5 @@ locals {
     "cost-optimization" = "enabled"
     "terraform-module"  = "3-k8s-platform"
   }
+
 }

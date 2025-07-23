@@ -26,11 +26,11 @@ resource "helm_release" "nginx_ingress" {
           }
         }
 
-        # Configure replica count from variable
-        replicaCount = var.nginx_ingress_replicas
+        # Configure replica count from dynamic calculation
+        replicaCount = var.platform_replicas
 
-        # Topology spread constraints for high availability
-        topologySpreadConstraints = [
+        # Topology spread constraints for high availability (conditional)
+        topologySpreadConstraints = var.platform_replicas > 1 ? [
           {
             maxSkew           = 1
             topologyKey       = "kubernetes.io/hostname"
@@ -43,7 +43,7 @@ resource "helm_release" "nginx_ingress" {
               }
             }
           }
-        ]
+        ] : []
 
         # Use ClusterIP service (Cloudflare Tunnel handles external access)
         service = {
