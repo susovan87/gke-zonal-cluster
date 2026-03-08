@@ -69,6 +69,10 @@ resource "google_container_cluster" "primary" {
     }
   }
 
+  vertical_pod_autoscaling {
+    enabled = var.enable_vpa
+  }
+
   # Disable cluster autoscaling (we manage nodes manually for cost control)
   cluster_autoscaling {
     enabled = false

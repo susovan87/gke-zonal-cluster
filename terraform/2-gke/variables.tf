@@ -63,3 +63,9 @@ variable "tf_state_bucket" {
   description = "GCS bucket for Terraform state"
   type        = string
 }
+
+variable "enable_vpa" {
+  description = "Enable Vertical Pod Autoscaling addon"
+  type        = bool
+  default     = false
+}
