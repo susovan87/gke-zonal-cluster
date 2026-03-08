@@ -16,9 +16,8 @@ resource "kubernetes_storage_class" "cost_optimized" {
   allow_volume_expansion = true
 
   parameters = {
-    type                       = "pd-standard"
-    replication-type           = "none"
-    provisioned-iops-on-create = "false"
+    type             = "pd-standard"
+    replication-type = "none"
   }
 }
 
@@ -35,8 +34,7 @@ resource "kubernetes_storage_class" "fast" {
   allow_volume_expansion = true
 
   parameters = {
-    type                       = "pd-ssd"
-    replication-type           = "none"
-    provisioned-iops-on-create = "false"
+    type             = "pd-ssd"
+    replication-type = "none"
   }
 }

@@ -50,7 +50,7 @@ variable "master_ipv4_cidr" {
 variable "node_count" {
   description = "Number of spot nodes in the cluster"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "disk_size_gb" {
