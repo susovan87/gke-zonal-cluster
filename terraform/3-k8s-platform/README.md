@@ -9,6 +9,7 @@ This stage deploys the following platform components:
 - **NGINX Ingress Controller**: Minimal ingress controller optimized for ARM nodes and spot instances
 - **Cloudflare Tunnel**: Secure tunnel for external access (optional)
 - **Storage Classes**: Cost-optimized and fast storage classes for different workload types
+- **Argo CD**: GitOps continuous delivery tool for Kubernetes (optional)
 
 ## Prerequisites
 
@@ -34,6 +35,12 @@ This stage deploys the following platform components:
 - Secure tunnel for external access without exposing LoadBalancer services
 - Metrics endpoint for monitoring and health checks
 - Optimized for ARM64 spot instances with proper tolerations
+
+### Argo CD (Optional)
+- GitOps continuous delivery tool deployed via Helm (chart v7.8.13)
+- Minimal resource configuration with dex, applicationSet, and notifications disabled
+- ARM64 tolerations for cost-optimized spot instances
+- Includes a hello-world Application deployed via `argocd-apps` chart
 
 ### Storage Classes
 - **cost-optimized**: Standard persistent disks (default)
@@ -74,6 +81,10 @@ make status
 - `enable_cloudflare_tunnel`: Enable Cloudflare Tunnel deployment (default: false)
 - `cloudflare_tunnel_token`: Cloudflare Tunnel token for authentication
 - `enable_storage_classes`: Enable custom storage classes (default: true)
+- `enable_argocd`: Enable Argo CD deployment (default: false)
+- `enable_argocd_ingress`: Enable Ingress for Argo CD server (default: false, use port-forward)
+- `argocd_hostname`: Hostname for Argo CD Ingress (default: "argocd.leisuretreasures.com")
+- `enable_argocd_hello_world_app`: Enable hello-world-app Argo CD Application (default: false)
 
 ### Dynamic Scaling
 Platform components support dynamic scaling based on node count through the `platform_replicas` variable:
@@ -106,6 +117,19 @@ kubectl get pods -n ingress-nginx
 
 # Check Cloudflare Tunnel (if enabled)
 kubectl get pods -n cloudflare
+
+# Check Argo CD (if enabled)
+kubectl get pods -n argocd
+
+# Access Argo CD UI via port-forward
+kubectl port-forward svc/argocd-server -n argocd 8080:80
+# Then open http://localhost:8080
+
+# Get Argo CD admin password
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+# Check Argo CD applications
+kubectl get applications -n argocd
 
 # Check storage classes
 kubectl get storageclass

@@ -61,6 +61,13 @@ print_status() {
         echo -e "  ${RED}❌ Cloudflare Tunnel${NC}"
     fi
 
+    # Argo CD
+    if kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server --no-headers 2>/dev/null | grep -q "Running"; then
+        echo -e "  ${GREEN}✅ Argo CD${NC}"
+    else
+        echo -e "  ${RED}❌ Argo CD${NC}"
+    fi
+
     # Recent events (last 5)
     echo -e "${BLUE}Recent Events:${NC}"
     kubectl get events --all-namespaces --sort-by='.lastTimestamp' --field-selector type!=Normal

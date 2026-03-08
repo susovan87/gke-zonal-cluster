@@ -30,6 +30,19 @@ output "storage_classes" {
   }
 }
 
+# Argo CD information
+output "argocd_status" {
+  description = "Argo CD deployment status"
+  value = {
+    enabled       = var.enable_argocd
+    chart_version = var.enable_argocd ? helm_release.argocd[0].version : null
+    namespace     = var.enable_argocd ? helm_release.argocd[0].namespace : null
+    ui_access     = var.enable_argocd ? (var.enable_argocd_ingress ? "https://${var.argocd_hostname}" : "kubectl port-forward svc/argocd-server -n argocd 8080:80 → http://localhost:8080") : null
+    get_password  = var.enable_argocd ? "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" : null
+    hello_world_app = var.enable_argocd && var.enable_argocd_hello_world_app ? "enabled" : "disabled"
+  }
+}
+
 # Cluster access information from previous stage
 output "cluster_info" {
   description = "GKE cluster information from previous stage"
