@@ -1,21 +1,13 @@
 terraform {
-  required_version = "~> 1.12"
+  required_version = "~> 1.14"
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 6.42"
+      version = "~> 7.22"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.37"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 3.0"
-    }
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 5.6"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.7"
     }
   }
 

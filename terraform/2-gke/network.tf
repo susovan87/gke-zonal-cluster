@@ -64,6 +64,9 @@ resource "google_compute_router_nat" "nat" {
   # Optimize for cost - use minimum ports per VM
   min_ports_per_vm = 64
 
+  # Standard tier is cheaper than Premium for egress-light workloads
+  auto_network_tier = "STANDARD"
+
   # Enable endpoint independent mapping for better performance
   enable_endpoint_independent_mapping = false
 }
@@ -104,6 +107,9 @@ resource "google_compute_firewall" "allow_health_check" {
   target_tags   = ["gke-node"]
   description   = "Allow Google Cloud health checks"
 }
+
+# In PSC mode, control plane traffic arrives through the PSC endpoint within the
+# subnet CIDR, so the allow-internal rule covers admission webhook ports.
 
 # Firewall rule for SSH access (optional, for debugging)
 resource "google_compute_firewall" "allow_ssh" {

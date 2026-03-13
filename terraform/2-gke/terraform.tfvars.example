@@ -11,10 +11,9 @@ network_name = "gke-learning-vpc"
 subnet_name  = "gke-learning-subnet"
 
 # CIDR ranges (adjust if needed to avoid conflicts)
-subnet_cidr      = "10.0.0.0/24"
-pods_cidr        = "10.1.0.0/16"
-services_cidr    = "10.2.0.0/16"
-master_ipv4_cidr = "172.16.0.0/28"
+subnet_cidr   = "10.0.0.0/24"
+pods_cidr     = "10.1.0.0/16"
+services_cidr = "10.2.0.0/16"
 
 # Node pool configuration
 node_count = 2 # ARM-based t2a-standard-2 spot instances
@@ -41,3 +40,6 @@ enable_cloudflare_tunnel = true
 # }
 
 tf_state_bucket = "your-bucket-name"
+
+# Binary Authorization (evaluation/dry-run mode)
+enable_binary_authorization = false

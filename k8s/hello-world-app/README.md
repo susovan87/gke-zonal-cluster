@@ -12,41 +12,41 @@ For end-to-end testing via ingress, ensure your GKE cluster has:
 
 ## Quick Start
 
-### Deploy to Development Environment
+### Deploy to Stage Environment
 
 ```bash
-# Deploy using the default (development) configuration
-kubectl apply -k .
+# Deploy using the default (stage) configuration
+kubectl apply -k . -n hello-world-stage
 
-# Or explicitly deploy to development
-kubectl apply -k overlays/development
+# Or explicitly deploy to stage
+kubectl apply -k overlays/stage -n hello-world-stage
 ```
 
-### Deploy to Production Environment
+### Deploy to Prod Environment
 
 ```bash
-# Deploy to production
-kubectl apply -k overlays/production
+# Deploy to prod
+kubectl apply -k overlays/prod -n hello-world-prod
 ```
 
 ### Test the Service
 
 ```bash
 # Check if pods are running
-kubectl get pods -l app=echo-app
+kubectl get pods -l app=echo-app -n hello-world-stage
 
 # Check if ingress is created
-kubectl get ingress
+kubectl get ingress -n hello-world-stage
 
 # Test locally with port forwarding
-kubectl port-forward svc/dev-echo-service-v1 8080:80
+kubectl port-forward svc/stg-echo-service-v1 8080:80 -n hello-world-stage
 
 # In another terminal, test the echo service locally
 curl http://localhost:8080
 
 # Test via ingress (requires NGINX Ingress Controller and Cloudflare Tunnel)
-# Development: curl https://echo-dev.mydomain.com
-# Production:  curl https://echo.mydomain.com
+# Stage: curl https://echo-stage.mydomain.com
+# Prod:  curl https://echo.mydomain.com
 ```
 
 ## Configuration Management
@@ -65,54 +65,54 @@ The application uses ConfigMaps to manage environment-specific settings:
 ### Preview Generated Manifests
 
 ```bash
-# See what will be deployed to development
-kubectl kustomize overlays/development
+# See what will be deployed to stage
+kubectl kustomize overlays/stage
 
-# See what will be deployed to production
-kubectl kustomize overlays/production
+# See what will be deployed to prod
+kubectl kustomize overlays/prod
 ```
 
 ### Scale the deployment
 ```bash
-# Development
-kubectl scale deployment dev-echo-app-v1 --replicas=2
+# Stage
+kubectl scale deployment stg-echo-app-v1 --replicas=2 -n hello-world-stage
 
-# Production
-kubectl scale deployment prod-echo-app-v1 --replicas=5
+# Prod
+kubectl scale deployment prod-echo-app-v1 --replicas=5 -n hello-world-prod
 ```
 
 ### View logs
 ```bash
-# Development
-kubectl logs -l app=echo-app,environment=development
+# Stage
+kubectl logs -l app=echo-app,environment=stage -n hello-world-stage
 
-# Production
-kubectl logs -l app=echo-app,environment=production
+# Prod
+kubectl logs -l app=echo-app,environment=prod -n hello-world-prod
 ```
 
 ### Check resource usage
 ```bash
-kubectl top pods -l app=echo-app
+kubectl top pods -l app=echo-app -n hello-world-stage
 ```
 
 ### Verify ConfigMap generation
 ```bash
 # Check generated ConfigMaps
-kubectl get configmaps -l app=echo-app
+kubectl get configmaps -l app=echo-app -n hello-world-stage
 
 # View ConfigMap contents
-kubectl describe configmap dev-echo-config-v1-<hash>
+kubectl describe configmap stg-echo-config-v1-<hash> -n hello-world-stage
 ```
 
 ## Clean Up
 
 ```bash
-# Remove development deployment
-kubectl delete -k overlays/development
+# Remove stage deployment
+kubectl delete -k overlays/stage -n hello-world-stage
 
-# Remove production deployment
-kubectl delete -k overlays/production
+# Remove prod deployment
+kubectl delete -k overlays/prod -n hello-world-prod
 
 # Remove all deployments
-kubectl delete -k .
+kubectl delete -k . -n hello-world-stage
 ```

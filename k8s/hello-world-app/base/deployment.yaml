@@ -11,11 +11,18 @@ spec:
         operator: Equal
         value: arm64
         effect: NoSchedule
-      nodeSelector:
-        kubernetes.io/arch: arm64
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: echo
         image: hashicorp/http-echo:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         env:
         - name: ECHO_TEXT
           valueFrom:

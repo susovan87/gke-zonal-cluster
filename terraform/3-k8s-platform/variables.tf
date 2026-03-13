@@ -23,12 +23,6 @@ variable "platform_replicas" {
   }
 }
 
-variable "enable_storage_classes" {
-  description = "Enable custom storage classes"
-  type        = bool
-  default     = true
-}
-
 variable "enable_argocd" {
   description = "Enable Argo CD deployment"
   type        = bool
@@ -47,10 +41,33 @@ variable "argocd_hostname" {
   default     = "argocd.leisuretreasures.com"
 }
 
-variable "enable_argocd_hello_world_app" {
-  description = "Enable hello-world-app Argo CD Application"
-  type        = bool
-  default     = false
+variable "argocd_hello_world_envs" {
+  description = "Map of hello-world-app environments to deploy via Argo CD"
+  type = map(object({
+    overlay_path     = string
+    target_namespace = string
+    target_revision  = optional(string, "HEAD")
+  }))
+  default = {}
+}
+
+variable "namespaces" {
+  description = "Managed namespaces with security baseline (PSS labels, LimitRanges, Network Policies). Use create=false for pre-existing namespaces (e.g. default)."
+  type = map(object({
+    create      = optional(bool, true)
+    pss_enforce = optional(string, "baseline")
+    pss_warn    = optional(string, "restricted")
+    pss_audit   = optional(string, "restricted")
+    limit_range = optional(object({
+      default_cpu    = optional(string, "500m")
+      default_memory = optional(string, "256Mi")
+      request_cpu    = optional(string, "50m")
+      request_memory = optional(string, "64Mi")
+      max_cpu        = optional(string, "1")
+      max_memory     = optional(string, "512Mi")
+    }), {})
+  }))
+  default = {}
 }
 
 variable "tf_state_bucket" {

@@ -22,11 +22,10 @@ output "cloudflare_tunnel_status" {
 
 # Storage Classes information
 output "storage_classes" {
-  description = "Custom storage classes deployment status"
+  description = "Custom storage classes"
   value = {
-    enabled        = var.enable_storage_classes
-    cost_optimized = var.enable_storage_classes ? kubernetes_storage_class.cost_optimized[0].metadata[0].name : null
-    fast           = var.enable_storage_classes ? kubernetes_storage_class.fast[0].metadata[0].name : null
+    default = "standard-rwo (GKE built-in)"
+    fast    = kubernetes_storage_class.fast.metadata[0].name
   }
 }
 
@@ -34,12 +33,12 @@ output "storage_classes" {
 output "argocd_status" {
   description = "Argo CD deployment status"
   value = {
-    enabled       = var.enable_argocd
-    chart_version = var.enable_argocd ? helm_release.argocd[0].version : null
-    namespace     = var.enable_argocd ? helm_release.argocd[0].namespace : null
-    ui_access     = var.enable_argocd ? (var.enable_argocd_ingress ? "https://${var.argocd_hostname}" : "kubectl port-forward svc/argocd-server -n argocd 8080:80 → http://localhost:8080") : null
-    get_password  = var.enable_argocd ? "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" : null
-    hello_world_app = var.enable_argocd && var.enable_argocd_hello_world_app ? "enabled" : "disabled"
+    enabled          = var.enable_argocd
+    chart_version    = var.enable_argocd ? helm_release.argocd[0].version : null
+    namespace        = var.enable_argocd ? helm_release.argocd[0].namespace : null
+    ui_access        = var.enable_argocd ? (var.enable_argocd_ingress ? "https://${var.argocd_hostname}" : "kubectl port-forward svc/argocd-server -n argocd 8080:80 → http://localhost:8080") : null
+    get_password     = var.enable_argocd ? "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" : null
+    hello_world_envs = var.enable_argocd ? { for k, v in var.argocd_hello_world_envs : k => v.target_namespace } : {}
   }
 }
 

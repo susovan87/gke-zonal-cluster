@@ -1,0 +1,25 @@
+# Argo CD Applications Helm values
+# Deployed via argocd-apps chart to avoid CRD-at-plan-time issues
+
+applications:
+%{ for env, cfg in envs ~}
+  hello-world-${env}:
+    namespace: "argocd"
+    project: "default"
+
+    source:
+      repoURL: "https://github.com/susovan87/gke-zonal-cluster.git"
+      targetRevision: "${cfg.target_revision}"
+      path: "${cfg.overlay_path}"
+
+    destination:
+      server: "https://kubernetes.default.svc"
+      namespace: "${cfg.target_namespace}"
+
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - "CreateNamespace=false"
+%{ endfor ~}

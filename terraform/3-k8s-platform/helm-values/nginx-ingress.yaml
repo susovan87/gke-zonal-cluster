@@ -1,0 +1,53 @@
+# NGINX Ingress Controller Helm values
+# Template variables: platform_replicas (number)
+
+controller:
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  replicaCount: ${platform_replicas}
+
+%{ if platform_replicas > 1 }
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: "kubernetes.io/hostname"
+      whenUnsatisfiable: "ScheduleAnyway"
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: "ingress-nginx"
+          app.kubernetes.io/instance: "nginx-ingress"
+          app.kubernetes.io/component: "controller"
+%{ else }
+  topologySpreadConstraints: []
+%{ endif }
+
+  # Use ClusterIP service (Cloudflare Tunnel handles external access)
+  service:
+    type: "ClusterIP"
+
+  tolerations:
+    - key: "kubernetes.io/arch"
+      operator: "Equal"
+      value: "arm64"
+      effect: "NoSchedule"
+
+  # Disable admission webhooks for simplicity
+  admissionWebhooks:
+    enabled: false
+
+  # Basic configuration optimizations
+  config:
+    worker-processes: "1"
+    worker-connections: "1024"
+    max-worker-connections: "1024"
+    enable-real-ip: "true"
+    add-headers: "ingress-nginx/custom-headers"
+
+# Default backend disabled - the NGINX controller handles 404s natively.
+defaultBackend:
+  enabled: false

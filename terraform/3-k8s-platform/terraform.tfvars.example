@@ -8,6 +8,26 @@ platform_replicas = 2  # Use 1 for single-node setups, 2 for HA
 # Routes are configured in Cloudflare Zero Trust Dashboard:
 # https://one.dash.cloudflare.com/networks/tunnels
 
-enable_storage_classes = true
+# Managed namespaces — each entry gets the full security baseline:
+# PSS labels (baseline enforce, restricted warn/audit), LimitRanges, and Network Policies
+namespaces = {
+  default           = { create = false }
+  hello-world-stage = {}
+  hello-world-prod  = {}
+}
+
+# Hello-world app environments deployed via Argo CD
+# Requires enable_argocd = true. Each key creates an ArgoCD Application + network policy.
+argocd_hello_world_envs = {
+  stage = {
+    overlay_path     = "k8s/hello-world-app/overlays/stage"
+    target_namespace = "hello-world-stage"
+  }
+  prod = {
+    overlay_path     = "k8s/hello-world-app/overlays/prod"
+    target_namespace = "hello-world-prod"
+    target_revision  = "main"
+  }
+}
 
 tf_state_bucket = "your-bucket-name"

@@ -1,36 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
 resources:
   - ../../base
 
-namePrefix: prod-
+namePrefix: stg-
 
 nameSuffix: -v1
 
 labels:
   - includeSelectors: true
     pairs:
-      environment: production
+      environment: stage
       version: v1
 
-# Override ConfigMap values for production
+# Override ConfigMap values for stage
 configMapGenerator:
   - name: echo-config
     behavior: merge
     envs:
       - application.properties
 
-# Production-specific patches
+# Stage-specific patches
 patches:
-  # Production scaling
+  # Single replica for stage
   - target:
       kind: Deployment
       name: echo-app
     patch: |-
       - op: replace
         path: /spec/replicas
-        value: 2
+        value: 1
 
-
-# Variable substitutions - domain will be automatically replaced from ConfigMap
+# Domain substitution - replace ingress host with value from ConfigMap
 replacements:
   - source:
       kind: ConfigMap

@@ -23,23 +23,21 @@ This stage deploys the following platform components:
 ## Components
 
 ### NGINX Ingress Controller
-- Optimized for ARM64 architecture with dedicated ARM64 default backend
 - Minimal resource configuration for cost savings
 - ClusterIP service (external access handled by Cloudflare Tunnel)
 - Custom security headers via ConfigMap
-- Tolerations for spot nodes and ARM architecture
 
 ### Cloudflare Tunnel (Optional)
 - **Remotely-managed tunnel** using token-based authentication (recommended by Cloudflare)
 - Routes configured in Cloudflare Zero Trust Dashboard (not in Terraform)
 - Secure tunnel for external access without exposing LoadBalancer services
 - Metrics endpoint for monitoring and health checks
-- Optimized for ARM64 spot instances with proper tolerations
+- Optimized for cost with minimal resource configuration
 
 ### Argo CD (Optional)
 - GitOps continuous delivery tool deployed via Helm (chart v7.8.13)
 - Minimal resource configuration with dex, applicationSet, and notifications disabled
-- ARM64 tolerations for cost-optimized spot instances
+- Minimal resource configuration for cost-optimized spot instances
 - Includes a hello-world Application deployed via `argocd-apps` chart
 
 ### Storage Classes
@@ -80,7 +78,6 @@ make status
 - `platform_replicas`: Number of replicas for platform components (default: 2, must be 1 or 2)
 - `enable_cloudflare_tunnel`: Enable Cloudflare Tunnel deployment (default: false)
 - `cloudflare_tunnel_token`: Cloudflare Tunnel token for authentication
-- `enable_storage_classes`: Enable custom storage classes (default: true)
 - `enable_argocd`: Enable Argo CD deployment (default: false)
 - `enable_argocd_ingress`: Enable Ingress for Argo CD server (default: false, use port-forward)
 - `argocd_hostname`: Hostname for Argo CD Ingress (default: "argocd.leisuretreasures.com")

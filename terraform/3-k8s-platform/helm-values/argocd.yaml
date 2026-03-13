@@ -1,0 +1,76 @@
+# Argo CD Helm values
+# Template variables: enable_argocd_ingress (bool), argocd_hostname (string)
+
+global:
+  tolerations:
+    - key: "kubernetes.io/arch"
+      operator: "Equal"
+      value: "arm64"
+      effect: "NoSchedule"
+
+# Disable non-essential components to save resources
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  enabled: false
+
+# Server component
+server:
+  extraArgs:
+    - "--insecure"
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "96Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  ingress:
+    enabled: ${enable_argocd_ingress}
+    ingressClassName: "nginx"
+    hostname: "${argocd_hostname}"
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+%{ if enable_argocd_ingress }
+    extraTls:
+      - hosts:
+          - "${argocd_hostname}"
+%{ else }
+    extraTls: []
+%{ endif }
+
+# Repo Server component
+repoServer:
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "96Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+# Application Controller
+controller:
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "384Mi"
+
+# Redis
+redis:
+  resources:
+    requests:
+      cpu: "10m"
+      memory: "32Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"

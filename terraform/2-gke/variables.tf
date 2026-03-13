@@ -41,12 +41,6 @@ variable "services_cidr" {
   default     = "10.2.0.0/16"
 }
 
-variable "master_ipv4_cidr" {
-  description = "CIDR range for the master network"
-  type        = string
-  default     = "172.16.0.0/28"
-}
-
 variable "node_count" {
   description = "Number of spot nodes in the cluster"
   type        = number
@@ -66,6 +60,12 @@ variable "tf_state_bucket" {
 
 variable "enable_vpa" {
   description = "Enable Vertical Pod Autoscaling addon"
+  type        = bool
+  default     = false
+}
+
+variable "enable_binary_authorization" {
+  description = "Enable Binary Authorization for deploy-time image validation (evaluation only)"
   type        = bool
   default     = false
 }

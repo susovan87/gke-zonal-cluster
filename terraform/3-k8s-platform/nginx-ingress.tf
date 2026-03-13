@@ -4,7 +4,7 @@ resource "helm_release" "nginx_ingress" {
   name       = "nginx-ingress"
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
-  version    = "4.8.3"
+  version    = "4.15.0"
   namespace  = "ingress-nginx"
 
   create_namespace = true
@@ -12,102 +12,8 @@ resource "helm_release" "nginx_ingress" {
   timeout          = 300
 
   values = [
-    yamlencode({
-      controller = {
-        # Minimal resource requests for cost optimization
-        resources = {
-          requests = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-          limits = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-        }
-
-        # Configure replica count from dynamic calculation
-        replicaCount = var.platform_replicas
-
-        # Topology spread constraints for high availability (conditional)
-        topologySpreadConstraints = var.platform_replicas > 1 ? [
-          {
-            maxSkew           = 1
-            topologyKey       = "kubernetes.io/hostname"
-            whenUnsatisfiable = "ScheduleAnyway"
-            labelSelector = {
-              matchLabels = {
-                "app.kubernetes.io/name"      = "ingress-nginx"
-                "app.kubernetes.io/instance"  = "nginx-ingress"
-                "app.kubernetes.io/component" = "controller"
-              }
-            }
-          }
-        ] : []
-
-        # Use ClusterIP service (Cloudflare Tunnel handles external access)
-        service = {
-          type = "ClusterIP"
-        }
-
-        # Tolerate ARM architecture
-        tolerations = [
-          {
-            key      = "kubernetes.io/arch"
-            operator = "Equal"
-            value    = "arm64"
-            effect   = "NoSchedule"
-          }
-        ]
-
-        # Disable admission webhooks for simplicity
-        admissionWebhooks = {
-          enabled = false
-        }
-
-        # Basic configuration optimizations
-        config = {
-          # Reduce connection limits for cost savings
-          "worker-processes"       = "1"
-          "worker-connections"     = "1024"
-          "max-worker-connections" = "1024"
-
-          # Optimize for ARM architecture
-          "enable-real-ip" = "true"
-
-          # Basic security headers
-          "add-headers" = "ingress-nginx/custom-headers"
-        }
-      }
-
-      # Minimal default backend
-      defaultBackend = {
-        enabled = true
-        image = {
-          repository = "registry.k8s.io/defaultbackend-arm64"
-          tag        = "1.5"
-        }
-        resources = {
-          requests = {
-            cpu    = "10m"
-            memory = "20Mi"
-          }
-          limits = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-        }
-        # Add ARM64 toleration for default backend
-        tolerations = [
-          {
-            key      = "kubernetes.io/arch"
-            operator = "Equal"
-            value    = "arm64"
-            effect   = "NoSchedule"
-          }
-        ]
-        # Use default security context
-      }
+    templatefile("${path.module}/helm-values/nginx-ingress.yaml", {
+      platform_replicas = var.platform_replicas
     })
   ]
 }
@@ -124,6 +30,83 @@ resource "kubernetes_config_map" "custom_headers" {
     "X-Content-Type-Options" = "nosniff"
     "X-XSS-Protection"       = "1; mode=block"
     "Referrer-Policy"        = "strict-origin-when-cross-origin"
+  }
+
+  depends_on = [helm_release.nginx_ingress]
+}
+
+# --- Network Policies ---
+# Baseline policies (deny-all, DNS, same-namespace) are in namespace-policies.tf.
+# Only component-specific allow rules below.
+
+# Allow Cloudflare Tunnel → NGINX Ingress Controller on ports 80/443
+resource "kubernetes_network_policy_v1" "ingress_nginx_allow_from_cloudflare" {
+  count = var.enable_cloudflare_tunnel ? 1 : 0
+
+  metadata {
+    name      = "allow-from-cloudflare-tunnel"
+    namespace = "ingress-nginx"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name"      = "ingress-nginx"
+        "app.kubernetes.io/component" = "controller"
+      }
+    }
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            "app.kubernetes.io/name" = "cloudflare-tunnel"
+          }
+        }
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name" = "cloudflare-tunnel"
+          }
+        }
+      }
+
+      ports {
+        port     = 80
+        protocol = "TCP"
+      }
+      ports {
+        port     = 443
+        protocol = "TCP"
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+
+  depends_on = [helm_release.nginx_ingress]
+}
+
+# Allow NGINX Ingress Controller egress to backend pods in any namespace
+# and to the Kubernetes API server (for Ingress resource watching)
+resource "kubernetes_network_policy_v1" "ingress_nginx_allow_egress" {
+
+  metadata {
+    name      = "allow-controller-egress"
+    namespace = "ingress-nginx"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name"      = "ingress-nginx"
+        "app.kubernetes.io/component" = "controller"
+      }
+    }
+
+    # Controller needs: API server (watch Ingress resources), backend pods (any namespace)
+    egress {}
+
+    policy_types = ["Egress"]
   }
 
   depends_on = [helm_release.nginx_ingress]

@@ -42,7 +42,6 @@ secrets/
 *.key
 *.crt
 *.p12
-application.properties
 
 # IDE and Editor files
 .vscode/

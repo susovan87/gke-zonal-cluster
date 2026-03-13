@@ -20,15 +20,22 @@ resource "google_container_node_pool" "spot_pool" {
     disk_size_gb = var.disk_size_gb
     disk_type    = "pd-standard"
 
-    # Essential OAuth scopes only
+    # Dedicated node SA with least-privilege IAM roles
+    service_account = google_service_account.gke_nodes.email
+
+    # Essential OAuth scopes only (ceiling; IAM roles are the actual boundary)
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
 
+    # Use GKE metadata server for Workload Identity
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+
     # Node labels for workload scheduling
     labels = {
       node-pool = "spot"
-      arch      = "arm64"
     }
 
 

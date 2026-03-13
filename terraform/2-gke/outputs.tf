@@ -56,6 +56,12 @@ output "node_count" {
   value       = var.node_count
 }
 
+# Node service account
+output "node_service_account_email" {
+  description = "Email of the dedicated GKE node service account"
+  value       = google_service_account.gke_nodes.email
+}
+
 # kubectl configuration command
 output "kubectl_config_command" {
   description = "Command to configure kubectl"

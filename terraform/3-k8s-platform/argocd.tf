@@ -7,7 +7,7 @@ resource "helm_release" "argocd" {
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "7.8.13"
+  version    = "9.4.10"
   namespace  = "argocd"
 
   create_namespace = true
@@ -15,104 +15,114 @@ resource "helm_release" "argocd" {
   timeout          = 300
 
   values = [
-    yamlencode({
-      # Global tolerations for ARM64 across all sub-components
-      global = {
-        tolerations = [
-          {
-            key      = "kubernetes.io/arch"
-            operator = "Equal"
-            value    = "arm64"
-            effect   = "NoSchedule"
-          }
-        ]
-      }
-
-      # Disable non-essential components to save resources
-      dex = {
-        enabled = false
-      }
-
-      notifications = {
-        enabled = false
-      }
-
-      applicationSet = {
-        enabled = false
-      }
-
-      # Server component
-      server = {
-        extraArgs = ["--insecure"]
-
-        resources = {
-          requests = {
-            cpu    = "50m"
-            memory = "96Mi"
-          }
-          limits = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-        }
-
-        # Optional Ingress
-        ingress = {
-          enabled          = var.enable_argocd_ingress
-          ingressClassName = "nginx"
-          hostname         = var.argocd_hostname
-          annotations = {
-            "nginx.ingress.kubernetes.io/backend-protocol" = "HTTP"
-          }
-          extraTls = var.enable_argocd_ingress ? [
-            {
-              hosts = [var.argocd_hostname]
-            }
-          ] : []
-        }
-      }
-
-      # Repo Server component
-      repoServer = {
-        resources = {
-          requests = {
-            cpu    = "50m"
-            memory = "96Mi"
-          }
-          limits = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-        }
-      }
-
-      # Application Controller
-      controller = {
-        resources = {
-          requests = {
-            cpu    = "50m"
-            memory = "128Mi"
-          }
-          limits = {
-            cpu    = "200m"
-            memory = "384Mi"
-          }
-        }
-      }
-
-      # Redis
-      redis = {
-        resources = {
-          requests = {
-            cpu    = "10m"
-            memory = "32Mi"
-          }
-          limits = {
-            cpu    = "100m"
-            memory = "128Mi"
-          }
-        }
-      }
+    templatefile("${path.module}/helm-values/argocd.yaml", {
+      enable_argocd_ingress = var.enable_argocd_ingress
+      argocd_hostname       = var.argocd_hostname
     })
   ]
+}
+
+# Allow ArgoCD internal communication (server, repo-server, controller, redis)
+resource "kubernetes_network_policy_v1" "argocd_allow_internal" {
+  count = var.enable_argocd ? 1 : 0
+
+  metadata {
+    name      = "allow-argocd-internal"
+    namespace = "argocd"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/part-of" = "argocd"
+      }
+    }
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "argocd"
+          }
+        }
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/part-of" = "argocd"
+          }
+        }
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+
+  depends_on = [helm_release.argocd]
+}
+
+# Allow NGINX Ingress → ArgoCD server on port 8080
+resource "kubernetes_network_policy_v1" "argocd_allow_from_ingress_nginx" {
+  count = var.enable_argocd ? 1 : 0
+
+  metadata {
+    name      = "allow-from-ingress-nginx"
+    namespace = "argocd"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name" = "argocd-server"
+      }
+    }
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "ingress-nginx"
+          }
+        }
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name"      = "ingress-nginx"
+            "app.kubernetes.io/component" = "controller"
+          }
+        }
+      }
+
+      ports {
+        port     = 8080
+        protocol = "TCP"
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+
+  depends_on = [helm_release.argocd]
+}
+
+# Allow ArgoCD egress to external git repos, Kubernetes API, and app namespaces
+resource "kubernetes_network_policy_v1" "argocd_allow_egress" {
+  count = var.enable_argocd ? 1 : 0
+
+  metadata {
+    name      = "allow-argocd-egress"
+    namespace = "argocd"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/part-of" = "argocd"
+      }
+    }
+
+    # ArgoCD needs: external HTTPS (git repos), K8s API server, app namespaces
+    egress {}
+
+    policy_types = ["Egress"]
+  }
+
+  depends_on = [helm_release.argocd]
 }

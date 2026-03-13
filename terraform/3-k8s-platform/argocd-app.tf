@@ -1,46 +1,61 @@
 # Argo CD Applications - deployed via argocd-apps Helm chart
 # Using Helm chart avoids CRD-at-plan-time issues with kubernetes_manifest
 
-resource "helm_release" "argocd_hello_world" {
-  count = var.enable_argocd && var.enable_argocd_hello_world_app ? 1 : 0
+resource "helm_release" "argocd_apps" {
+  count = var.enable_argocd && length(var.argocd_hello_world_envs) > 0 ? 1 : 0
 
   name       = "argocd-hello-world"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-apps"
-  version    = "2.0.2"
+  version    = "2.0.4"
   namespace  = "argocd"
 
-  values = [
-    yamlencode({
-      applications = {
-        hello-world = {
-          namespace = "argocd"
-          project   = "default"
+  values = [templatefile("${path.module}/helm-values/argocd-apps.yaml.tftpl", {
+    envs = var.argocd_hello_world_envs
+  })]
 
-          source = {
-            repoURL        = "https://github.com/susovan87/gke-zonal-cluster.git"
-            targetRevision  = "HEAD"
-            path           = "k8s/hello-world-app/overlays/development"
+  depends_on = [helm_release.argocd]
+}
+
+# Allow NGINX Ingress -> echo-app on port 8080 (per environment)
+resource "kubernetes_network_policy_v1" "hello_world_allow_from_ingress_nginx" {
+  for_each = var.enable_argocd ? var.argocd_hello_world_envs : {}
+
+  metadata {
+    name      = "allow-from-ingress-nginx"
+    namespace = each.value.target_namespace
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app" = "echo-app"
+      }
+    }
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "ingress-nginx"
           }
-
-          destination = {
-            server    = "https://kubernetes.default.svc"
-            namespace = "hello-world-dev"
-          }
-
-          syncPolicy = {
-            automated = {
-              prune    = true
-              selfHeal = true
-            }
-            syncOptions = [
-              "CreateNamespace=true"
-            ]
+        }
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name"      = "ingress-nginx"
+            "app.kubernetes.io/component" = "controller"
           }
         }
       }
-    })
-  ]
 
-  depends_on = [helm_release.argocd]
+      ports {
+        port     = 8080
+        protocol = "TCP"
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+
+  depends_on = [kubernetes_namespace.managed]
 }

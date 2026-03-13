@@ -67,38 +67,21 @@ resource "kubernetes_deployment" "cloudflare_tunnel" {
       }
 
       spec {
-        # Node affinity - schedule on spot nodes (only node pool in minimal setup)
-        affinity {
-          node_affinity {
-            preferred_during_scheduling_ignored_during_execution {
-              weight = 100
-              preference {
-                match_expressions {
-                  key      = "node-pool"
-                  operator = "In"
-                  values   = ["spot"]
-                }
+        # Topology spread constraints - distribute pods evenly across nodes (conditional)
+        dynamic "topology_spread_constraint" {
+          for_each = var.platform_replicas > 1 ? [1] : []
+          content {
+            max_skew           = 1
+            topology_key       = "kubernetes.io/hostname"
+            when_unsatisfiable = "ScheduleAnyway"
+            label_selector {
+              match_labels = {
+                "app.kubernetes.io/name" = "cloudflare-tunnel"
               }
             }
           }
         }
 
-        # Topology spread constraints - distribute pods evenly across nodes (conditional)
-        dynamic "topology_spread_constraint" {
-          for_each = var.platform_replicas > 1 ? [1] : []
-          content {
-          max_skew           = 1
-          topology_key       = "kubernetes.io/hostname"
-          when_unsatisfiable = "ScheduleAnyway"
-          label_selector {
-            match_labels = {
-              "app.kubernetes.io/name" = "cloudflare-tunnel"
-            }
-          }
-        }
-        }
-
-        # Tolerations for ARM64 architecture
         toleration {
           key      = "kubernetes.io/arch"
           operator = "Equal"
@@ -285,5 +268,56 @@ resource "kubernetes_pod_disruption_budget_v1" "cloudflare_tunnel" {
         "app.kubernetes.io/name" = "cloudflare-tunnel"
       }
     }
+  }
+}
+
+
+# Allow metrics scraping on port 8080
+resource "kubernetes_network_policy_v1" "cloudflare_allow_metrics" {
+  count = var.enable_cloudflare_tunnel ? 1 : 0
+
+  metadata {
+    name      = "allow-metrics"
+    namespace = kubernetes_namespace.cloudflare[0].metadata[0].name
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name" = "cloudflare-tunnel"
+      }
+    }
+
+    ingress {
+      ports {
+        port     = 8080
+        protocol = "TCP"
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+}
+
+# Allow Cloudflare Tunnel egress to Cloudflare edge and NGINX Ingress
+resource "kubernetes_network_policy_v1" "cloudflare_allow_egress" {
+  count = var.enable_cloudflare_tunnel ? 1 : 0
+
+  metadata {
+    name      = "allow-tunnel-egress"
+    namespace = kubernetes_namespace.cloudflare[0].metadata[0].name
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name" = "cloudflare-tunnel"
+      }
+    }
+
+    # Tunnel needs: Cloudflare edge (external HTTPS), NGINX Ingress (forward traffic)
+    egress {}
+
+    policy_types = ["Egress"]
   }
 }
