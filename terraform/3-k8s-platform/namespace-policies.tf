@@ -18,6 +18,8 @@ locals {
     var.enable_argocd ? ["argocd"] : [],
     var.enable_cloudflare_tunnel ? ["cloudflare"] : [],
   ))
+
+  nginx_ingress_namespaces = toset([for k, v in var.namespaces : k if v.allow_nginx_ingress_8080])
 }
 
 # --- Namespace creation ---
@@ -175,6 +177,45 @@ resource "kubernetes_network_policy_v1" "allow_dns_egress" {
     helm_release.argocd,
     kubernetes_namespace.cloudflare,
   ]
+}
+
+# Allow NGINX Ingress -> workloads on port 8080 (opt-in via allow_nginx_ingress_8080)
+resource "kubernetes_network_policy_v1" "allow_from_ingress_nginx" {
+  for_each = local.nginx_ingress_namespaces
+
+  metadata {
+    name      = "allow-from-ingress-nginx"
+    namespace = each.key
+  }
+
+  spec {
+    pod_selector {}
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "ingress-nginx"
+          }
+        }
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name"      = "ingress-nginx"
+            "app.kubernetes.io/component" = "controller"
+          }
+        }
+      }
+
+      ports {
+        port     = 8080
+        protocol = "TCP"
+      }
+    }
+
+    policy_types = ["Ingress"]
+  }
+
+  depends_on = [kubernetes_namespace.managed]
 }
 
 # Allow intra-namespace communication (pods within the same namespace)

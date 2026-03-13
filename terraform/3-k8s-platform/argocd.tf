@@ -59,49 +59,6 @@ resource "kubernetes_network_policy_v1" "argocd_allow_internal" {
   depends_on = [helm_release.argocd]
 }
 
-# Allow NGINX Ingress → ArgoCD server on port 8080
-resource "kubernetes_network_policy_v1" "argocd_allow_from_ingress_nginx" {
-  count = var.enable_argocd ? 1 : 0
-
-  metadata {
-    name      = "allow-from-ingress-nginx"
-    namespace = "argocd"
-  }
-
-  spec {
-    pod_selector {
-      match_labels = {
-        "app.kubernetes.io/name" = "argocd-server"
-      }
-    }
-
-    ingress {
-      from {
-        namespace_selector {
-          match_labels = {
-            "kubernetes.io/metadata.name" = "ingress-nginx"
-          }
-        }
-        pod_selector {
-          match_labels = {
-            "app.kubernetes.io/name"      = "ingress-nginx"
-            "app.kubernetes.io/component" = "controller"
-          }
-        }
-      }
-
-      ports {
-        port     = 8080
-        protocol = "TCP"
-      }
-    }
-
-    policy_types = ["Ingress"]
-  }
-
-  depends_on = [helm_release.argocd]
-}
-
 # Allow ArgoCD egress to external git repos, Kubernetes API, and app namespaces
 resource "kubernetes_network_policy_v1" "argocd_allow_egress" {
   count = var.enable_argocd ? 1 : 0

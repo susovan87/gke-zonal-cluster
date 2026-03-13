@@ -41,23 +41,20 @@ variable "argocd_hostname" {
   default     = "argocd.leisuretreasures.com"
 }
 
-variable "argocd_hello_world_envs" {
-  description = "Map of hello-world-app environments to deploy via Argo CD"
-  type = map(object({
-    overlay_path     = string
-    target_namespace = string
-    target_revision  = optional(string, "HEAD")
-  }))
-  default = {}
+variable "argocd_repo_url" {
+  description = "Git repository URL for the Argo CD root app-of-apps Application"
+  type        = string
+  default     = "https://github.com/susovan87/gke-zonal-cluster.git"
 }
 
 variable "namespaces" {
-  description = "Managed namespaces with security baseline (PSS labels, LimitRanges, Network Policies). Use create=false for pre-existing namespaces (e.g. default)."
+  description = "Managed namespaces with security baseline (PSS labels, LimitRanges, Network Policies). Use create=false for pre-existing namespaces (e.g. default). Set allow_nginx_ingress_8080=true for namespaces that receive traffic from NGINX Ingress on port 8080."
   type = map(object({
-    create      = optional(bool, true)
-    pss_enforce = optional(string, "baseline")
-    pss_warn    = optional(string, "restricted")
-    pss_audit   = optional(string, "restricted")
+    create                   = optional(bool, true)
+    allow_nginx_ingress_8080 = optional(bool, false)
+    pss_enforce              = optional(string, "baseline")
+    pss_warn                 = optional(string, "restricted")
+    pss_audit                = optional(string, "restricted")
     limit_range = optional(object({
       default_cpu    = optional(string, "500m")
       default_memory = optional(string, "256Mi")

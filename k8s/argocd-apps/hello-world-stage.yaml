@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hello-world-stage
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/susovan87/gke-zonal-cluster.git
+    targetRevision: HEAD
+    path: k8s/hello-world-app/overlays/stage
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hello-world-stage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false

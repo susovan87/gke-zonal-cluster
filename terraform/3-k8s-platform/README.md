@@ -81,7 +81,7 @@ make status
 - `enable_argocd`: Enable Argo CD deployment (default: false)
 - `enable_argocd_ingress`: Enable Ingress for Argo CD server (default: false, use port-forward)
 - `argocd_hostname`: Hostname for Argo CD Ingress (default: "argocd.leisuretreasures.com")
-- `enable_argocd_hello_world_app`: Enable hello-world-app Argo CD Application (default: false)
+- `argocd_repo_url`: Git repo URL for the Argo CD root app-of-apps (default: this repo)
 
 ### Dynamic Scaling
 Platform components support dynamic scaling based on node count through the `platform_replicas` variable:

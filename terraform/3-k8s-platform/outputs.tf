@@ -33,12 +33,12 @@ output "storage_classes" {
 output "argocd_status" {
   description = "Argo CD deployment status"
   value = {
-    enabled          = var.enable_argocd
-    chart_version    = var.enable_argocd ? helm_release.argocd[0].version : null
-    namespace        = var.enable_argocd ? helm_release.argocd[0].namespace : null
-    ui_access        = var.enable_argocd ? (var.enable_argocd_ingress ? "https://${var.argocd_hostname}" : "kubectl port-forward svc/argocd-server -n argocd 8080:80 → http://localhost:8080") : null
-    get_password     = var.enable_argocd ? "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" : null
-    hello_world_envs = var.enable_argocd ? { for k, v in var.argocd_hello_world_envs : k => v.target_namespace } : {}
+    enabled       = var.enable_argocd
+    chart_version = var.enable_argocd ? helm_release.argocd[0].version : null
+    namespace     = var.enable_argocd ? helm_release.argocd[0].namespace : null
+    ui_access     = var.enable_argocd ? (var.enable_argocd_ingress ? "https://${var.argocd_hostname}" : "kubectl port-forward svc/argocd-server -n argocd 8080:80 → http://localhost:8080") : null
+    get_password  = var.enable_argocd ? "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" : null
+    app_of_apps   = var.enable_argocd ? "Child Applications managed in k8s/argocd-apps/" : null
   }
 }
 
