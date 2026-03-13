@@ -107,7 +107,7 @@ Most components are optional and controlled via `terraform.tfvars`:
 | `enable_binary_authorization` | 2-gke | `false` | Binary Authorization (evaluation/dry-run mode) |
 | `enable_argocd` | 3-k8s-platform | `false` | Argo CD deployment |
 | `enable_argocd_ingress` | 3-k8s-platform | `false` | Ingress for Argo CD (default: use port-forward) |
-| `argocd_hello_world_envs` | 3-k8s-platform | `{}` | Map of hello-world-app environments for Argo CD |
+| `argocd_repo_url` | 3-k8s-platform | `(this repo)` | Git repo URL for the Argo CD root app-of-apps |
 | `enable_cloudflare_tunnel` | 3-k8s-platform | `false` | Cloudflare Tunnel for zero-cost ingress |
 
 ## 🔒 Namespace Security Baseline
@@ -244,8 +244,8 @@ kubectl apply -k k8s/hello-world-app/overlays/stage -n hello-world-stage   # Dep
 kubectl apply -k k8s/hello-world-app/overlays/prod -n hello-world-prod     # Deploy to prod
 ```
 
-### GitOps with Argo CD
-When Argo CD is enabled (`enable_argocd = true`), configure `argocd_hello_world_envs` to have Argo CD manage the hello-world-app environments automatically.
+### GitOps with Argo CD (App-of-Apps)
+When Argo CD is enabled (`enable_argocd = true`), Terraform bootstraps a root Application that watches `k8s/argocd-apps/`. Child Application YAMLs in that directory define what to deploy and from which git revision. To change a deployment (e.g. pin prod to a release tag), commit a YAML change — no `terraform apply` needed.
 
 ## 📊 Monitoring
 

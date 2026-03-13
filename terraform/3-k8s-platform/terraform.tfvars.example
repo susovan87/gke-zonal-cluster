@@ -12,22 +12,14 @@ platform_replicas = 2  # Use 1 for single-node setups, 2 for HA
 # PSS labels (baseline enforce, restricted warn/audit), LimitRanges, and Network Policies
 namespaces = {
   default           = { create = false }
-  hello-world-stage = {}
-  hello-world-prod  = {}
+  hello-world-stage = { allow_nginx_ingress_8080 = true }
+  hello-world-prod  = { allow_nginx_ingress_8080 = true }
+  # When using Argo CD with Ingress, add:
+  # argocd = { create = false, allow_nginx_ingress_8080 = true }
 }
 
-# Hello-world app environments deployed via Argo CD
-# Requires enable_argocd = true. Each key creates an ArgoCD Application + network policy.
-argocd_hello_world_envs = {
-  stage = {
-    overlay_path     = "k8s/hello-world-app/overlays/stage"
-    target_namespace = "hello-world-stage"
-  }
-  prod = {
-    overlay_path     = "k8s/hello-world-app/overlays/prod"
-    target_namespace = "hello-world-prod"
-    target_revision  = "main"
-  }
-}
+# Argo CD app-of-apps: child Applications are managed as YAML in k8s/argocd-apps/
+# Override the repo URL if you're working from a fork:
+# argocd_repo_url = "https://github.com/your-fork/gke-zonal-cluster.git"
 
 tf_state_bucket = "your-bucket-name"

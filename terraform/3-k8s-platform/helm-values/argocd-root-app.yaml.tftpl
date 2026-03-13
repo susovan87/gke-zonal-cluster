@@ -1,0 +1,15 @@
+applications:
+  app-of-apps:
+    namespace: argocd
+    project: default
+    source:
+      repoURL: "${repo_url}"
+      targetRevision: HEAD
+      path: k8s/argocd-apps
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: argocd
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
